@@ -14,4 +14,21 @@ CHIP Xor {
 
     PARTS:
     // Put your code here:
+    // not gate
+    Nand(a=a, b=a, out =nota);
+    Nand(a=b, b=b, out =notb);
+    //and gate
+    Nand(a=a, b=notb, out =and1);
+    Nand(a=and1,b=and1, out = o1);
+    Nand(a=nota, b=b, out =and2);
+    Nand(a=and2, b=and2, out =o2);
+
+
+    // or gate
+    Nand(a=o1,b=o1, out=o3);
+    Nand(a=o2,b=o2, out=o4);
+    Nand(a=o3,b=o4, out=out);
+
+    
+
 }

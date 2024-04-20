@@ -7,6 +7,7 @@
  * Multiplexor:
  * out = a if sel == 0
  *       b otherwise
+ Or(And(b, sel), And(a, not(sel)))
  */
 
 CHIP Mux {
@@ -15,4 +16,8 @@ CHIP Mux {
 
     PARTS:
     // Put your code here:
+    And(a =b, b=sel,out=andb);
+    Not(in=sel,out=notsel);
+    And(a=a,b=notsel,out= anda );
+    Or(a=andb,b=anda,out=out);
 }
