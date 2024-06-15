@@ -14,5 +14,7 @@ CHIP Bit {
     OUT out;
 
     PARTS:
-    // Put your code here:
+    // Put your code here: a=preOut, 就是把上一时刻的输出赋值给a。
+    Mux(a=preOut, b=in, sel =load, out= out1);
+    DFF(in = out1, out = preOut,out =out);
 }
