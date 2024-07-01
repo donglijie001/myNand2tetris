@@ -716,6 +716,26 @@ IO映像指的是把计算机中的IO端口（Input/Output Ports）映射到内�
 
 ![image-20240622122322497](myNand2tetrisNote.assets/image-20240622122322497.png)
 
+翻译A指令：
+
+![image-20240622144739438](myNand2tetrisNote.assets/image-20240622144739438.png)
+
+这里暂时先只讨论常数， 直接把它翻译成一个15位的二进制code，不足左边补0.
+
+C指令
+
+![image-20240622161527852](myNand2tetrisNote.assets/image-20240622161527852.png)
+
+c指令就直接按照上面的内容进行翻译，但是到目前为止还没有处理符号。
+
+符号表：
+
+<img src="myNand2tetrisNote.assets/image-20240622212633783.png" alt="image-20240622212633783" style="zoom: 33%;" />
+
+视频中遍历了两次文件，第一次先把符号标签给遍历出来，然后再遍历一遍把变量给遍历出来。在遍历的时候，也需要记住符号标签的行号
+
+![image-20240622213451527](myNand2tetrisNote.assets/image-20240622213451527.png)
+
 ## 实现
 
 这里提出一个基于4个模块的汇编编译器的实现：
@@ -733,9 +753,56 @@ IO映像指的是把计算机中的IO端口（Input/Output Ports）映射到内�
 
 ### Parser模块
 
+<img src="myNand2tetrisNote.assets/image-20240623110512535.png" alt="image-20240623110512535" style="zoom:40%;" />
 
+<img src="myNand2tetrisNote.assets/image-20240623110601133.png" alt="image-20240623110601133" style="zoom:40%;" />
 
+<img src="myNand2tetrisNote.assets/image-20240623111237325.png" alt="image-20240623111237325" style="zoom:40%;" />
 
+<img src="myNand2tetrisNote.assets/image-20240623111315100.png" alt="image-20240623111315100" style="zoom:40%;" />
+
+<img src="myNand2tetrisNote.assets/image-20240623111658507.png" alt="image-20240623111658507" style="zoom:25%;" />
+
+<img src="myNand2tetrisNote.assets/image-20240623154627613.png" alt="image-20240623154627613" style="zoom:50%;" />
+<img src="myNand2tetrisNote.assets/image-20240623161815197.png" alt="image-20240623161815197" style="zoom:50%;" />
+
+<img src="myNand2tetrisNote.assets/image-20240623161744215.png" alt="image-20240623161744215" style="zoom:50%;" />
+
+两阶段开发，先开发支持无符号的，然后再开发支持有符号的。
+
+开始开发：
+
+我先建了一个名为assembler的控制台项目，这是一个maven项目，然后新建一个类Main，作为程序的主入口类，同时我为了打包成jar后，程序能够运行，所以，设置了maven编译参数。如下：
+
+```
+<build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>com.assembler.Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+```
+
+然后就可以在控制台里，进入到target目录，输入``` java -jar assembler-1.0-SNAPSHOT.jar``` 来运行项目，或者像下面这样，但是感觉每次都打开终端，输入命令行，感觉有些麻烦，
+
+![image-20240623195223290](myNand2tetrisNote.assets/image-20240623195223290.png)
+
+可以在idea里面设置启动参数，我把asm文件的绝对目录塞进去了。：[参考链接](https://blog.csdn.net/u013713294/article/details/53020293)
+
+### Symbol Table 符号表模块
+
+就是一个map，往里面塞标签， 以及它们的地址。
 
 # 参考资料
 
