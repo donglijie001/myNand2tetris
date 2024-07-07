@@ -2,3 +2,16 @@
 ._.DS_Store
 *.DS_Store
 *.out
+*target
+target
+
+# IntelliJ
+*.iml
+.idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml 
+.idea/dictionaries
+.idea/libraries
+
