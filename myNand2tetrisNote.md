@@ -523,7 +523,7 @@ M=1 // R1=1
 
 ```
 
-<img src="myNand2tetrisNote.assets/image-20240522084656533.png" alt="image-20240522084656533" style="zoom:50%;" />
+<img src="myNand2tetrisNote.assets/image-20240522084656533.png" alt="image-20240522084656533" style="zoom: 33%;" />
 
 上面的代码，可读性不强，所以便加上了符号引用
 
@@ -803,6 +803,294 @@ c指令就直接按照上面的内容进行翻译，但是到目前为止还没�
 ### Symbol Table 符号表模块
 
 就是一个map，往里面塞标签， 以及它们的地址。
+
+# 07 虚拟机I：堆栈运算
+
+## 背景知识
+
+一个高级语言，在计算机上运行之前，它必须被翻译成计算机的机器语言，通常，高级语言和其对应的机器语言，需要有一个专门的编译器，高级语言和编译器以及对应的机器语言存在很强的依赖性。
+
+如何减少这种依赖性？
+
+解决方案：将整个编译过程分为两个几乎独立的过程，第一阶段，高级语言被解析出来，其命令被翻译成一种中间结果，第二阶段，这些中间结果被翻译成目标硬件的机器语言。
+
+第一个程序，仍然称为编译器，将高级代码翻译成中间VM指令，第二个程序将VM代码翻译成目标硬件平台的机器语言。
+
+<img src="./myNand2tetrisNote.assets/image-20240710085417074.png" alt="image-20240710085417074" style="zoom: 33%;" />
+
+比如java 就是先编译字节码（VM Code），然后由JVM 执行。
+
+<img src="./myNand2tetrisNote.assets/image-20240713191624254.png" alt="image-20240713191624254" style="zoom: 25%;" />
+
+<img src="./myNand2tetrisNote.assets/image-20240713192209402.png" alt="image-20240713192209402" style="zoom: 25%;" />
+
+堆栈模型
+
+如下图，简单的堆栈式是用数组直接表示，用一个指针sp表示栈顶。（并且我发现内存的地址都是从上到下，这点以前没有注意到）
+
+![image-20240710090156204](./myNand2tetrisNote.assets/image-20240710090156204.png)
+
+图里面的栈顶，是不存放元素的。
+
+堆栈主要有两个用途：1、处理所有VM的算术和逻辑操作；2、用于子程序调用和相关的内存分配。
+
+如果想要对堆栈应用某个操作的话，分为三步：
+
+1、从栈里面弹出对应的参数
+
+2、执行计算
+
+3、将结果入栈
+
+
+
+## VM规范详述：第I部分
+
+### 概述
+
+虚拟机是基于堆栈的，所有的操作都是在堆栈上完成，同时也是基于函数的，一个完整的虚拟机VM由若干个称为函数的程序单元组成，这些函数使用VM语言编写，每个函数都有自己独立代码，并被独立地处理。VM语言使用单一的16位数据类型，能够表示整数、布尔类型或者指针，该语言包含四种类型的命令：
+
+- 算数命令：在堆栈上执行算术和逻辑操作
+- 存储器存取命令：在堆栈和虚拟内存单元之间转移数据
+- 程序流程命令：是条件分支操作和无条件分支操作变得容易
+- 函数调用命令：调用函数并返回调用处（即函数调用指令的下一条指令地址）
+
+<img src="./myNand2tetrisNote.assets/image-20240713194112525.png" alt="image-20240713194112525" style="zoom: 33%;" />
+
+例如：
+
+对于一个高级代码：`d=(2-x)+(y+9)`，它会被翻译成下面的vm code，然后一步一步的执行，入栈，出栈进行操作，在一开始执行的时候，栈是空的。
+
+![image-20240713195000758](./myNand2tetrisNote.assets/image-20240713195000758.png)
+
+VM命令格式：
+![image-20240711085530474](./myNand2tetrisNote.assets/image-20240711085530474.png)
+
+### 算数命令和逻辑命令
+
+![image-20240711090236402](./myNand2tetrisNote.assets/image-20240711090236402.png)
+
+对于二元命令，是从堆栈中弹出连个元素，在其上执行二元函数操作，然后将结果压回堆栈，一元命令，是只从堆栈中弹出一个元素，在其上执行一元函数操作，然后将结果压回堆栈。
+
+上图中有三个命令(eq、gt、lt)返回布尔类型的值，VM分别用-1（0XFFFF）和0（0X0000）来代表真（true）和假（false）。
+
+
+
+### 内存访问命令
+
+如下图，对于某个高级语言的一条命令比如`let c = s1 +y; `会被翻译成右边那几条vm code（具体如何翻译的后面会学到）。
+
+<img src="./myNand2tetrisNote.assets/image-20240717085015397.png" alt="image-20240717085015397" style="zoom: 33%;" />
+
+<img src="./myNand2tetrisNote.assets/image-20240717085248614.png" alt="image-20240717085248614" style="zoom: 25%;" />
+
+对于上面那段完整的代码，s1是静态变量，y是函数参数，c是局部变量，我们期望在vm中也能把这些变量类型给保存下来，如果不保存，程序执行就会出错，因此，引入内存段机制来记录这些不同类型的变量。
+
+<img src="./myNand2tetrisNote.assets/image-20240717085716616.png" alt="image-20240717085716616" style="zoom: 33%;" />
+
+![image-20240717085819308](./myNand2tetrisNote.assets/image-20240717085819308.png)
+
+这样的话，push或pop的那些变量名就会被代替。
+
+![image-20240717085940393](./myNand2tetrisNote.assets/image-20240717085940393.png)
+
+对于伪命令pop 和push x来说，x代表在某个全局内存中的一个独立的存储单元。
+
+VM操纵8个独立的虚拟内存段，如下图，并且所有的内存段都通过相同的两个命令来进行存取。
+
+![image-20240711092013003](./myNand2tetrisNote.assets/image-20240711092013003.png)
+
+注：视频里说pop 不可以操作 constant 内存段。
+
+![image-20240720114251428](./myNand2tetrisNote.assets/image-20240720114251428.png)
+
+小练习
+
+![image-20240717091239665](./myNand2tetrisNote.assets/image-20240717091239665.png)
+
+segment代表上图中8个内存段之一， index是从0开始。
+
+### 程序控制命令和流程调用命令
+
+![image-20240712002010780](./myNand2tetrisNote.assets/image-20240712002010780.png)
+
+### Jack-VM-Hack平台中的程序元素
+
+<img src="./myNand2tetrisNote.assets/image-20240712002311146.png" alt="image-20240712002311146" style="zoom:50%;" />
+
+### VM编程实例
+
+
+
+#### **典型的算法任务**
+
+下面这段高级语言代码：
+
+<img src="./myNand2tetrisNote.assets/image-20240713152232006.png" alt="image-20240713152232006" style="zoom:50%;" />
+
+注：
+
+```
+VM命令不能使用符号化的参数和变量名，只能按照segment index的形式来进行引用，所以需要将x，y，sum和j分别映射成argument 0、argument 1、local 0 和local 1，然后将代码中的所有参数和变量名的符号都替换为对应的segment index 形式。
+并且高级语言里的for while 会被VM的goto 代替。
+并且VM函数开始执行时，假定：
+1、堆栈是空的
+2、用来操作的参数位于程序的argument部分呢
+3、程序local部分的局部变量都初始化为0.
+```
+
+![image-20240713153340157](./myNand2tetrisNote.assets/image-20240713153340157.png)
+
+![image-20240713153328025](./myNand2tetrisNote.assets/image-20240713153328025.png)
+
+也就说上面的那8个内存段 argument、local只是一个标识，而真正的算术操作是通过堆栈来实现的。
+
+#### **数组处理**
+
+假设高级语言创建了名为bar的由10个整数组成的数组，然后填入了10个数字，现在假定数组的基地址已经被映射到RAM的4315处，想要执行bar[2]=19，如何在VM层级上实现这个操作呢。
+
+![image-20240713154324508](./myNand2tetrisNote.assets/image-20240713154324508.png)![image-20240713154400893](./myNand2tetrisNote.assets/image-20240713154400893.png)
+
+
+
+#### 对象处理
+
+从高级语言的角度，对象是封装了数据（由成员字段fields或者属性properties组成）和相关代码（由方法即methods组成）的实体，然而从本质上来讲，每个对象实例的数据是在RAM上被序列化成一段数字，这串数字代表对象中各个字段的值，因此对象的低级处理和数组的低级处理很相似。
+
+例如，一个动画程序，在屏幕上弹球，假设每个球对象被整数字段x、y、radius和color来描述，而且程序创建了该对象并命名为b，那么在计算机里这个对象的内部形式是什么样的呢？
+
+它会被存储在RAM里，当程序在创建一个新对象，编译器都会以字节为单位计算对象的大小，然后操作系统会寻早一个足够大的RAM空间并分配给该对象来存储它的内容，假设该对象已经被分配到了从3012到3015地址的RAM空间，如下图所示。
+
+![image-20240713184915508](./myNand2tetrisNote.assets/image-20240713184915508.png)
+
+### VM实现
+
+#### 栈
+
+指针操作
+
+![image-20240720123359414](./myNand2tetrisNote.assets/image-20240720123359414.png)
+
+![image-20240720123803647](./myNand2tetrisNote.assets/image-20240720123803647.png)
+
+这里假设栈的SP指针存储在RAM[0]位置，栈的base addr 从256开始。
+
+使用hack 语言
+
+![image-20240720124255181](./myNand2tetrisNote.assets/image-20240720124255181.png)
+
+
+
+![image-20240711230155140](./myNand2tetrisNote.assets/image-20240720124646785.png)
+
+#### 内存段实现
+
+RAM 地址分配
+
+![image-20240820135047355](./myNand2tetrisNote.assets/image-20240820135047355.png)
+
+this that的基址都是在堆里面，2048～16383， local 和arg 是在256～2047里面，不知道是不是普遍规律
+
+![image-20240820135735537](./myNand2tetrisNote.assets/image-20240820135735537.png)
+
+一共8个内存段
+
+**local 实现**
+
+先记着这些通用寄存器。
+
+![image-20240720142345023](./myNand2tetrisNote.assets/image-20240720142345023.png)
+
+![image-20240720142441197](./myNand2tetrisNote.assets/image-20240720142441197.png)
+
+使用SP记录栈顶指针，LCL记录local内存段的base addr，所以看样子对于不同的段就是会有不同的指针来存储它的base addr。 
+
+![image-20240720150651119](./myNand2tetrisNote.assets/image-20240720150651119.png)
+
+argument 、 this 、that 和local 是一样的。操作起来是一样的。
+
+**constant**
+
+只有push操作，没有pop
+
+![image-20240720151954338](./myNand2tetrisNote.assets/image-20240720151954338.png)
+
+**static**
+
+如下图，静态变量，使用了RAM16开始的位置，直到RAM255，但是这里有一个假设就是程序里的静态变量没有那么多，按顺序分配不会超过255，比如在Foo.vm中的变量，就会变成Foo 开头的变量，会被转成汇编代码。
+
+![image-20240720153942265](./myNand2tetrisNote.assets/image-20240720153942265.png)
+
+**temp**
+
+![image-20240720161725075](./myNand2tetrisNote.assets/image-20240720161725075.png)
+
+**pointer**
+
+![image-20240720161936828](./myNand2tetrisNote.assets/image-20240720161936828.png)
+
+![image-20240720162016315](./myNand2tetrisNote.assets/image-20240720162016315.png)
+
+
+
+VM Emulator
+
+因为第7章只是一个半成品，因此需要加载测试脚本。做一些初始化。
+
+![image-20240720185129639](./myNand2tetrisNote.assets/image-20240720185129639.png)
+
+### Hack VM Implementation
+
+![image-20240720221855578](./myNand2tetrisNote.assets/image-20240720221855578.png)
+
+
+
+![image-20240721120434049](./myNand2tetrisNote.assets/image-20240721120434049.png)
+
+
+
+测试：
+
+使用cpu 模拟器，先加载asm文件，然后再加载测试脚本（文件名不包含VME的那个），即可。
+
+我先写出来了SimpleAdd.vm 对应的汇编代码。但是和我看的那个参考文件不太一样。参考文件里，在从栈里面弹出变量的时候，把它给放到了临时寄存器里，而我并没有，感觉参考资源里的那种方式更好一些，后面我会都改成这样。
+
+```
+//vm push constant 7
+@7
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//vm push constant 8
+@8
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//vm add
+@SP
+M=M-1
+A=M
+D=M
+@SP
+M=M-1
+@SP
+A=M
+D=D+M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+
+```
+
+
 
 # 参考资料
 
