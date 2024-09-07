@@ -108,7 +108,8 @@ public class Parser {
             return command.trim();
         } else if (CommandType.C_PUSH.equals(commandType) || CommandType.C_POP.equals(commandType)
                 || CommandType.C_LABEL.equals(commandType) || CommandType.C_GOTO.equals(commandType)
-                || CommandType.C_IF.equals(commandType)
+                || CommandType.C_IF.equals(commandType) || CommandType.C_FUNCTION.equals(commandType)
+                || CommandType.C_CALL.equals(commandType)
         ) {
             return command.split(" ")[1].trim();
         }
@@ -117,7 +118,8 @@ public class Parser {
 
     public String arg2() {
         CommandType commandType = commandType();
-        if (CommandType.C_PUSH.equals(commandType) || CommandType.C_POP.equals(commandType)) {
+        if (CommandType.C_PUSH.equals(commandType) || CommandType.C_POP.equals(commandType)
+                || CommandType.C_FUNCTION.equals(commandType) || CommandType.C_CALL.equals(commandType)) {
             return command.split(" ")[2].trim();
         } else {
             return null;

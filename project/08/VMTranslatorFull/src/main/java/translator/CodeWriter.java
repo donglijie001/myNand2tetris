@@ -3,6 +3,7 @@ package translator;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Stack;
 
 /**
  * @author donglijie <donglijie@kuaishou.com>
@@ -13,13 +14,18 @@ public class CodeWriter {
     private int i = 0;
     // 用来区分符号链接，比如一个文件里可能会有很多个eq命令，加上这个是为了进行区分，实际上可以不用，
     // 我参考的代码里有这个，先暂时保留这个
-
+    /**
+     * This stack is used to store the call function. <br/>
+     * Because the label in different function need the different function name to distinguish.
+     */
+    public Stack<String> callStack;
 
     public FileWriter getFileWriter() {
         return fileWriter;
     }
 
     public CodeWriter(File outFile) throws IOException {
+        this.callStack = new Stack<>();
         this.fileWriter = new FileWriter(outFile);
     }
 
@@ -334,7 +340,7 @@ public class CodeWriter {
         String command = parser.getCommand();
         String label = parser.arg1();
         String content = "//vm" + command + System.lineSeparator()
-                + "(" + label + ")" + System.lineSeparator();
+                + "(" + this.callStack.peek() + "$" + label + ")" + System.lineSeparator();
         writeTranslatedCommand(content);
     }
 
@@ -342,7 +348,7 @@ public class CodeWriter {
         String command = parser.getCommand();
         String label = parser.arg1();
         String content = "//vm" + command + System.lineSeparator()
-                + "@" + label + System.lineSeparator()
+                + "@" + this.callStack.peek() + "$" + label + System.lineSeparator()
                 + "0;JMP" + System.lineSeparator();
         writeTranslatedCommand(content);
 
@@ -353,7 +359,7 @@ public class CodeWriter {
         String label = parser.arg1();
         String content = "//vm" + command + System.lineSeparator()
                 + getTopSP()
-                + "@" + label + System.lineSeparator()
+                + "@" + this.callStack.peek() + "$" + label + System.lineSeparator()
                 + "D;JNE" + System.lineSeparator();
         writeTranslatedCommand(content);
     }
@@ -363,10 +369,175 @@ public class CodeWriter {
         this.fileWriter.flush();
     }
 
-    private void writeInit() {
-        String content = "//vm init program" + System.lineSeparator()
-                + "";
+    private String writeInit() {
+        this.callStack.push("Sys.init");
+        return "// Sys.init function start" + System.lineSeparator()
+                + "(Sys.init)" + System.lineSeparator();
     }
 
+    public void writeFunction(Parser parser) throws IOException {
+        String command = parser.getCommand();
+        String arg1 = parser.arg1(); // functionName
+        String arg2 = parser.arg2(); // function 参数格式
+        String content = "";
+        content += "//vm" + command + System.lineSeparator();
+        if (arg1.equals("Sys.init")) {
+            content += writeInit();
+            writeTranslatedCommand(content);
 
+            return;
+        }
+        /*
+         * function functionName nVars， 生成对应的汇编代码：分为如下几步
+         * 1、创建一个label 格式：（functionName）
+         * 2、初始化局部变量， 重复nVars次， 将0放入栈中
+         *    这个的做法，就是一个循环，循环中使用的label就是 (functionName$LOOP) 和(functionName$END)
+         *
+         * */
+
+        content += "(" + arg1 + ")" + System.lineSeparator(); // 将函数名创建一个label
+
+        content += "//initialize local segment" + System.lineSeparator();
+        content += "@" + arg2 + System.lineSeparator() // 把局部变量放到D寄存器
+                + "D=A" + System.lineSeparator();
+        // 重复k times 初始化局部变量, 就是增加k个0到栈里，
+        content += "(" + arg1 + "$LOOP" + ")" + System.lineSeparator()
+                + "D=D-1" + System.lineSeparator()
+                + "@" + arg1 + "$END" + System.lineSeparator()
+                + "D;JLT" + System.lineSeparator()
+                + getPutValueIntoStack("0")
+                + "@" + arg1 + "$LOOP" + System.lineSeparator()
+                + "0;JMP" + System.lineSeparator()
+                + "(" + arg1 + "$END" + ")" + System.lineSeparator();
+        writeTranslatedCommand(content);
+    }
+
+    public void writeReturn(Parser parser) throws IOException {
+        String command = parser.getCommand();
+        String content = "";
+        /**
+         * 1、创建一个临时变量endFrame， 存放LCL段的值
+         * 2、将ARG0的值存入ARG1
+         */
+        content += "//vm" + command + System.lineSeparator();
+        content += "@LCL" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@R13" + System.lineSeparator()
+                + "M=D //temporarily store the endFrame " + System.lineSeparator()
+                + "@R13" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@5" + System.lineSeparator()
+                + "A=D-A // get the return address" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@R14" + System.lineSeparator()
+                + "M=D // temporarily store the return address" + System.lineSeparator();
+
+        content += "@ARG" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@0" + System.lineSeparator()
+                + "D=D+A";
+        content += storeInReg("R15");
+        content += getTopSP();
+        content += "// store the top value" + System.lineSeparator()
+                + "@R15" + System.lineSeparator()
+                + "A=M" + System.lineSeparator()
+                + "M=D" + System.lineSeparator();
+        content += "// set the SP" + System.lineSeparator()
+                + "@ARG" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@SP" + System.lineSeparator()
+                + "M=D+1" + System.lineSeparator()
+                + "// restore scene" + System.lineSeparator()
+                + "@R13" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@R15" + System.lineSeparator()
+                + "M=D" + System.lineSeparator()
+                + System.lineSeparator()
+                + "@R15" + System.lineSeparator()
+                + "M=M-1" + System.lineSeparator()
+                + "A=M" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@THAT" + System.lineSeparator()
+                + "M=D" + System.lineSeparator()
+                + "" + System.lineSeparator()
+                + "@R15" + System.lineSeparator()
+                + "M=M-1" + System.lineSeparator()
+                + "A=M" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@THIS" + System.lineSeparator()
+                + "M=D" + System.lineSeparator()
+                + "" + System.lineSeparator()
+                + "@R15" + System.lineSeparator()
+                + "M=M-1" + System.lineSeparator()
+                + "A=M" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@ARG" + System.lineSeparator()
+                + "M=D" + System.lineSeparator()
+                + "" + System.lineSeparator()
+                + "@R15" + System.lineSeparator()
+                + "M=M-1" + System.lineSeparator()
+                + "A=M" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@LCL" + System.lineSeparator()
+                + "M=D" + System.lineSeparator()
+                + "" + System.lineSeparator()
+                + "// goto return address" + System.lineSeparator()
+                + "@R14" + System.lineSeparator()
+                + "A=M" + System.lineSeparator()
+                + "0;JMP" + System.lineSeparator();
+        writeTranslatedCommand(content);
+    }
+
+    public void writeCall(Parser parser) throws IOException {
+        String command = parser.getCommand();
+        String arg1 = parser.arg1(); // functionName
+        String arg2 = parser.arg2(); // function 参数格式为 n
+        // when the program meet call a function, we push function name to call stack and the call
+        // stack can be used by write label method. And when the program return the method, we pop
+        // the function name.
+        String content = "";
+        this.callStack.push(arg1 + (++this.i));
+        content += "//vm" + command + System.lineSeparator()
+                + saveScene()
+                + "// argument process" + System.lineSeparator()
+                + "@SP" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@5" + System.lineSeparator()
+                + "D=D-A" + System.lineSeparator()
+                + "@" + arg2 + "" + System.lineSeparator()
+                + "D=D-A" + System.lineSeparator()
+                + "@ARG" + System.lineSeparator()
+                + "M=D" + System.lineSeparator()
+                + "// LCL=SP" + System.lineSeparator()
+                + "@SP" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + "@LCL" + System.lineSeparator()
+                + "M=D" + System.lineSeparator()
+                + "// go to called function" + System.lineSeparator()
+                + "@" + arg1 + "" + System.lineSeparator()
+                + "0;JMP" + System.lineSeparator() +
+                "(" + this.callStack.peek() + "$retAddr" + i + ")" + System.lineSeparator()
+        ;
+        writeTranslatedCommand(content);
+    }
+
+    private String saveScene() throws IOException {
+        String content = "// save work" + System.lineSeparator()
+                + "@" + this.callStack.peek() + "$retAddr" + i + System.lineSeparator()
+                + "D=A" + System.lineSeparator()
+                + getPutValueIntoStack("D")
+                + "@LCL" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + getPutValueIntoStack("D")
+                + "@ARG" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + getPutValueIntoStack("D")
+                + "@THIS" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + getPutValueIntoStack("D")
+                + "@THAT" + System.lineSeparator()
+                + "D=M" + System.lineSeparator()
+                + getPutValueIntoStack("D");
+        return content;
+    }
 }

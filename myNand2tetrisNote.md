@@ -1092,6 +1092,138 @@ M=M+1
 
 
 
+# 08 虚拟机II：程序控制
+
+## 程序控制流
+
+分支命令：是基于 goto 、if-goto、label 这些标签实现的。
+
+函数命令：是基于 call function、function、 return实现的。
+
+![image-20240823090214132](./myNand2tetrisNote.assets/image-20240823090214132.png)
+
+goto
+
+每次使用goto命令的时候，都需要把一个特定的条件推到堆栈上。
+
+![image-20240823201806714](./myNand2tetrisNote.assets/image-20240823201806714.png)
+
+![image-20240823202149088](./myNand2tetrisNote.assets/image-20240823202149088.png)
+
+## 子程序调用
+
+任何一种编程语言都提供一组固定的内置命令，但他同时也允许程序员基于这些命令去自定义指令去扩展这些基本指令集。
+
+![image-20240824123741875](./myNand2tetrisNote.assets/image-20240824123741875.png)
+
+VM中定义函数
+
+![image-20240824123947403](./myNand2tetrisNote.assets/image-20240824123947403.png)
+
+![image-20240824124130092](./myNand2tetrisNote.assets/image-20240824124130092.png)
+
+下图里面，function f n 的解释是错误的，应该是f里面有n个局部变量。
+
+![image-20240825173035432](./myNand2tetrisNote.assets/image-20240825173035432.png)
+
+![image-20240824131108672](./myNand2tetrisNote.assets/image-20240824131108672.png)
+
+执行了第一行，function mult 2 ， 它就把main函数里栈顶的两个元素，写入了mult函数的argument 段里，mult 2 就说明是两个局部变量，因此，也会创建两个局部变量，并且栈也是空的
+
+![image-20240824133259556](./myNand2tetrisNote.assets/image-20240824133259556.png)
+
+![image-20240824134105088](./myNand2tetrisNote.assets/image-20240824134105088.png)
+
+![image-20240824134337659](./myNand2tetrisNote.assets/image-20240824134337659.png)
+
+![image-20240824134449512](./myNand2tetrisNote.assets/image-20240824134449512.png)
+
+![image-20240824134847626](./myNand2tetrisNote.assets/image-20240824134847626.png)
+
+### 初始化
+
+VM程序是一组相关的VM函数的集合，一般来自于某种高级程序的编译，当VM实现开始运行（或者重启时）按照惯例它总是执行名为Sys.init的无参数VM函数，接着该函数调用用于程序中的主函数，因此生成VM的编译器必须保证每个翻译后的程序都有个这个的Sys.init函数。
+
+
+
+### Implementation preview
+
+Function execution
+
+![image-20240824154127292](./myNand2tetrisNote.assets/image-20240824154127292.png)
+
+函数执行实际上就是一个调用链。在运行时必须维护好函数的状态。
+
+functin state
+
+![image-20240824154452688](./myNand2tetrisNote.assets/image-20240824154452688.png)
+
+![image-20240824154605156](./myNand2tetrisNote.assets/image-20240824154605156.png)
+
+函数的状态有很多，有caller的状态也有callee的状态。
+
+![image-20240824160501793](./myNand2tetrisNote.assets/image-20240824160501793.png)
+
+把函数的状态信息的保存称为frame，我好像突然明白了这点，它保存的信息实际上就是这些内存段的地址，等返回的时候再把这些内存段的地址写入到对应的寄存器上，比如LCL。
+
+<img src="./myNand2tetrisNote.assets/image-20240824160944233.png" alt="image-20240824160944233" style="zoom:25%;" />
+
+<img src="./myNand2tetrisNote.assets/image-20240824161113944.png" alt="image-20240824161113944" style="zoom:50%;" />
+
+全局堆栈
+
+由一个个的block组成。
+
+![image-20240824162307491](./myNand2tetrisNote.assets/image-20240824162307491.png)
+
+### Run-time simulation
+
+![image-20240824192550432](./myNand2tetrisNote.assets/image-20240824192550432.png)
+
+![image-20240824193004652](./myNand2tetrisNote.assets/image-20240824193004652.png)
+
+图里面有一点画错了，function factorial 1 不是0，0 表示函数没有输入参数。没有错，call f n，是指在n个参数入栈之后，调用f函数。function f k 声明一个有k个局部变量的函数f。
+
+蓝点代表程序的返回位置。
+
+### Detailed implementation
+
+![image-20240825113139385](./myNand2tetrisNote.assets/image-20240825113139385.png)
+
+![image-20240825113814442](./myNand2tetrisNote.assets/image-20240825113814442.png)
+
+![image-20240825114046039](./myNand2tetrisNote.assets/image-20240825114046039.png)
+
+![image-20240825114308478](./myNand2tetrisNote.assets/image-20240825114308478.png)
+
+![image-20240825125018950](./myNand2tetrisNote.assets/image-20240825125018950.png)
+
+sp -5 是因为上面push 了 5次。
+
+![image-20240825125700355](./myNand2tetrisNote.assets/image-20240825125700355.png)
+
+![image-20240825130538078](./myNand2tetrisNote.assets/image-20240825130538078.png)
+
+![image-20240825130920846](./myNand2tetrisNote.assets/image-20240825130920846.png)
+
+### 初始化
+
+![image-20240825140846026](./myNand2tetrisNote.assets/image-20240825140846026.png)
+
+### Hack平台 VM标准映射
+
+![image-20240825141529476](./myNand2tetrisNote.assets/image-20240825141529476.png)
+
+![image-20240825141910876](./myNand2tetrisNote.assets/image-20240825141910876.png)
+
 # 参考资料
 
 [github参考项目](https://github.com/woai3c/nand2tetris)
+
+# 疑问
+
+2024.08.25 
+
+今天看到第8章，突然有一个疑问，就是这本书里讲内存分为指令内存和数据内存，cpu只能执行存储在指令内存中的程序，而指令内存是只读的，写的汇编程序到底是什么？以及数据内存到底是指啥。
+
+看了一些说明，写的asm 汇编程序，在CPU 模拟器打开的时候，这一步是不是就相当于是把汇编指令加载到指令内存里。然后还看到了[虚拟内存](https://xiaolincoding.com/os/3_memory/vmem.html#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98)的概念。
