@@ -1,49 +1,55 @@
-//vm push argument 1
+//vm command push argument 1
+// get ARGbase address
 @ARG
 D=M
 @1
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop pointer 1
-@THIS
+//vm command pop pointer 1
+//get pointer address
+@3
 D=A
 @1
-D=D+A 
-// store the element in register:R13
+D=D+A
+//tmp store pointer into R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
+//load pointer address fromR13
 @R13
 A=M
 M=D
-//vm push constant 0
+//vm command push constant 0
 @0
 D=A
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop that 0
+//vm command pop that 0
+// getTHAT final address 
 @THAT
 D=M
 @0
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -51,24 +57,26 @@ D=M
 @R13
 A=M
 M=D
-//vm push constant 1
+//vm command push constant 1
 @1
 D=A
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop that 1
+//vm command pop that 1
+// getTHAT final address 
 @THAT
 D=M
 @1
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -76,63 +84,72 @@ D=M
 @R13
 A=M
 M=D
-//vm push argument 0
+//vm command push argument 0
+// get ARGbase address
 @ARG
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm push constant 2
+//vm command push constant 2
 @2
 D=A
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// get the  top element of stack and make sp minus 1
+//vm command sub
+// get top two value and tmp store
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R14
+
+// tmp store in R14
 @R14
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R13
+// tmp store in R13
 @R13
 M=D
-// R13 minus  R14
+//read R13 value
 @R13
 D=M
+//read R14 value
 @R14
+// execute sub
 D=D-M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop argument 0
+//vm command pop argument 0
+// getARG final address 
 @ARG
 D=M
 @0
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -140,93 +157,105 @@ D=M
 @R13
 A=M
 M=D
-//vmlabel MAIN_LOOP_START
+//vm command label MAIN_LOOP_START
 (MAIN_LOOP_START)
-//vm push argument 0
+//vm command push argument 0
+// get ARGbase address
 @ARG
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vmif-goto COMPUTE_ELEMENT
-// get the  top element of stack and make sp minus 1
+//vm command if-goto COMPUTE_ELEMENT
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
 @COMPUTE_ELEMENT
-D;JNE
-//vmgoto END_PROGRAM
+D;JGT//vm command goto END_PROGRAM
 @END_PROGRAM
 0;JMP
-//vmlabel COMPUTE_ELEMENT
+//vm command label COMPUTE_ELEMENT
 (COMPUTE_ELEMENT)
-//vm push that 0
+//vm command push that 0
+// get THATbase address
 @THAT
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm push that 1
+//vm command push that 1
+// get THATbase address
 @THAT
 D=M
 @1
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// get the  top element of stack and make sp minus 1
+//vm command add
+// get top two value and tmp store
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R14
+
+// tmp store in R14
 @R14
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R13
+// tmp store in R13
 @R13
 M=D
-// R13 add  R14
+//read R13 value
 @R13
 D=M
+//read R14 value
 @R14
+// execute add
 D=D+M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop that 2
+//vm command pop that 2
+// getTHAT final address 
 @THAT
 D=M
 @2
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -234,127 +263,144 @@ D=M
 @R13
 A=M
 M=D
-//vm push pointer 1
-@THIS
+//vm command push pointer 1
+//get pointer address
+@3
 D=A
 @1
-A=D+A 
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm push constant 1
+//vm command push constant 1
 @1
 D=A
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// get the  top element of stack and make sp minus 1
+//vm command add
+// get top two value and tmp store
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R14
+
+// tmp store in R14
 @R14
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R13
+// tmp store in R13
 @R13
 M=D
-// R13 add  R14
+//read R13 value
 @R13
 D=M
+//read R14 value
 @R14
+// execute add
 D=D+M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop pointer 1
-@THIS
+//vm command pop pointer 1
+//get pointer address
+@3
 D=A
 @1
-D=D+A 
-// store the element in register:R13
+D=D+A
+//tmp store pointer into R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
+//load pointer address fromR13
 @R13
 A=M
 M=D
-//vm push argument 0
+//vm command push argument 0
+// get ARGbase address
 @ARG
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm push constant 1
+//vm command push constant 1
 @1
 D=A
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// get the  top element of stack and make sp minus 1
+//vm command sub
+// get top two value and tmp store
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R14
+
+// tmp store in R14
 @R14
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R13
+// tmp store in R13
 @R13
 M=D
-// R13 minus  R14
+//read R13 value
 @R13
 D=M
+//read R14 value
 @R14
+// execute sub
 D=D-M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop argument 0
+//vm command pop argument 0
+// getARG final address 
 @ARG
 D=M
 @0
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -362,8 +408,8 @@ D=M
 @R13
 A=M
 M=D
-//vmgoto MAIN_LOOP_START
+//vm command goto MAIN_LOOP_START
 @MAIN_LOOP_START
 0;JMP
-//vmlabel END_PROGRAM
+//vm command label END_PROGRAM
 (END_PROGRAM)

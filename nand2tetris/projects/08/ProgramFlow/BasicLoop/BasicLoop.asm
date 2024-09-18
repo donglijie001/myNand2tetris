@@ -1,21 +1,23 @@
-//vm push constant 0
+//vm command push constant 0    
 @0
 D=A
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop local 0
+//vm command pop local 0
+// getLCL final address 
 @LCL
 D=M
 @0
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -23,68 +25,79 @@ D=M
 @R13
 A=M
 M=D
-//vmlabel LOOP_START
+//vm command label LOOP_START
 (LOOP_START)
-//vm push argument 0
+//vm command push argument 0    
+// get ARGbase address
 @ARG
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm push local 0
+//vm command push local 0
+// get LCLbase address
 @LCL
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// get the  top element of stack and make sp minus 1
+//vm command add
+// get top two value and tmp store
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R14
+
+// tmp store in R14
 @R14
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R13
+// tmp store in R13
 @R13
 M=D
-// R13 add  R14
+//read R13 value
 @R13
 D=M
+//read R14 value
 @R14
+// execute add
 D=D+M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop local 0
+//vm command pop local 0
+// getLCL final address 
 @LCL
 D=M
 @0
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -92,63 +105,72 @@ D=M
 @R13
 A=M
 M=D
-//vm push argument 0
+//vm command push argument 0
+// get ARGbase address
 @ARG
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm push constant 1
+//vm command push constant 1
 @1
 D=A
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// get the  top element of stack and make sp minus 1
+//vm command sub
+// get top two value and tmp store
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R14
+
+// tmp store in R14
 @R14
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R13
+// tmp store in R13
 @R13
 M=D
-// R13 minus  R14
+//read R13 value
 @R13
 D=M
+//read R14 value
 @R14
+// execute sub
 D=D-M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vm pop argument 0
+//vm command pop argument 0
+// getARG final address 
 @ARG
 D=M
 @0
-D=A+D
-// store the element in register:R13
+A=D+A
+D=A
+// tmp store in R13
 @R13
 M=D
-// get the  top element of stack and make sp minus 1
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
@@ -156,33 +178,36 @@ D=M
 @R13
 A=M
 M=D
-//vm push argument 0
+//vm command push argument 0
+// get ARGbase address
 @ARG
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D
 @SP
 M=M+1
-//vmif-goto LOOP_START
-// get the  top element of stack and make sp minus 1
+//vm command if-goto LOOP_START
+// get top stack value and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
 @LOOP_START
-D;JNE
-//vm push local 0
+D;JGT//vm command push local 0
+// get LCLbase address
 @LCL
 D=M
 @0
-A=A+D
+// base address + i
+A=D+A
 D=M
-// push the value into stackD
+//push value:D into stack
 @SP
 A=M
 M=D

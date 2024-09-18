@@ -1,30 +1,5 @@
-//vm push constant 3030
-@3030
-D=A
-// push the value into stackD
-@SP
-A=M
-M=D
-@SP
-M=M+1
-//vm pop pointer 0
-@THIS
-D=A
+//vm push constant 0
 @0
-D=D+A 
-// store the element in register:R13
-@R13
-M=D
-// get the  top element of stack and make sp minus 1
-@SP
-M=M-1
-A=M
-D=M
-@R13
-A=M
-M=D
-//vm push constant 3040
-@3040
 D=A
 // push the value into stackD
 @SP
@@ -32,35 +7,10 @@ A=M
 M=D
 @SP
 M=M+1
-//vm pop pointer 1
-@THIS
-D=A
-@1
-D=D+A 
-// store the element in register:R13
-@R13
-M=D
-// get the  top element of stack and make sp minus 1
-@SP
-M=M-1
-A=M
+//vm pop local 0
+@LCL
 D=M
-@R13
-A=M
-M=D
-//vm push constant 32
-@32
-D=A
-// push the value into stackD
-@SP
-A=M
-M=D
-@SP
-M=M+1
-//vm pop this 2
-@THIS
-D=M
-@2
+@0
 D=A+D
 // store the element in register:R13
 @R13
@@ -73,36 +23,13 @@ D=M
 @R13
 A=M
 M=D
-//vm push constant 46
-@46
-D=A
-// push the value into stackD
-@SP
-A=M
-M=D
-@SP
-M=M+1
-//vm pop that 6
-@THAT
+//vmlabel LOOP_START
+(LOOP_START)
+//vm push argument 0
+@ARG
 D=M
-@6
-D=A+D
-// store the element in register:R13
-@R13
-M=D
-// get the  top element of stack and make sp minus 1
-@SP
-M=M-1
-A=M
-D=M
-@R13
-A=M
-M=D
-//vm push pointer 0
-@THIS
-D=A
 @0
-A=D+A 
+A=A+D
 D=M
 // push the value into stackD
 @SP
@@ -110,11 +37,11 @@ A=M
 M=D
 @SP
 M=M+1
-//vm push pointer 1
-@THIS
-D=A
-@1
-A=D+A 
+//vm push local 0
+@LCL
+D=M
+@0
+A=A+D
 D=M
 // push the value into stackD
 @SP
@@ -149,12 +76,37 @@ A=M
 M=D
 @SP
 M=M+1
-//vm push this 2
-@THIS
+//vm pop local 0
+@LCL
 D=M
-@2
+@0
+D=A+D
+// store the element in register:R13
+@R13
+M=D
+// get the  top element of stack and make sp minus 1
+@SP
+M=M-1
+A=M
+D=M
+@R13
+A=M
+M=D
+//vm push argument 0
+@ARG
+D=M
+@0
 A=A+D
 D=M
+// push the value into stackD
+@SP
+A=M
+M=D
+@SP
+M=M+1
+//vm push constant 1
+@1
+D=A
 // push the value into stackD
 @SP
 A=M
@@ -188,10 +140,26 @@ A=M
 M=D
 @SP
 M=M+1
-//vm push that 6
-@THAT
+//vm pop argument 0
+@ARG
 D=M
-@6
+@0
+D=A+D
+// store the element in register:R13
+@R13
+M=D
+// get the  top element of stack and make sp minus 1
+@SP
+M=M-1
+A=M
+D=M
+@R13
+A=M
+M=D
+//vm push argument 0
+@ARG
+D=M
+@0
 A=A+D
 D=M
 // push the value into stackD
@@ -200,27 +168,20 @@ A=M
 M=D
 @SP
 M=M+1
+//vmif-goto LOOP_START
 // get the  top element of stack and make sp minus 1
 @SP
 M=M-1
 A=M
 D=M
-// store the element in register:R14
-@R14
-M=D
-// get the  top element of stack and make sp minus 1
-@SP
-M=M-1
-A=M
+@LOOP_START
+D;JNE
+//vm push local 0
+@LCL
 D=M
-// store the element in register:R13
-@R13
-M=D
-// R13 add  R14
-@R13
+@0
+A=A+D
 D=M
-@R14
-D=D+M
 // push the value into stackD
 @SP
 A=M
